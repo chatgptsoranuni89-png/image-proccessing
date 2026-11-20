@@ -1,0 +1,951 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a1124">
+
+    <title>DocVision OCR | Document Image Processing</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- =====================================
+         HEADER
+    ====================================== -->
+
+    <header class="site-header">
+        <div class="header-wrap">
+
+            <div class="brand">
+                <span class="brand-symbol">◈</span>
+                DocVision<span>OCR</span>
+            </div>
+
+            <div class="header-label">
+                <span class="status-dot"></span>
+                DIGITAL IMAGE PROCESSING PROJECT
+            </div>
+
+        </div>
+    </header>
+
+
+    <main class="main-wrap">
+
+        <!-- =====================================
+             HERO SECTION
+        ====================================== -->
+
+        <section class="hero">
+
+            <div class="eyebrow">
+                DOCUMENT IMAGE PREPROCESSING FOR OCR
+            </div>
+
+            <h1>
+                Every document deserves<br>
+                <span>a clearer view.</span>
+            </h1>
+
+            <p>
+                Enhance document images, explore processing
+                stages, extract text, and evaluate OCR accuracy.
+            </p>
+
+        </section>
+
+
+        <!-- =====================================
+             UPLOAD & ORIGINAL DOCUMENT
+        ====================================== -->
+
+        <section class="workspace"
+                 aria-label="Document processing workspace">
+
+            <!-- UPLOAD PANEL -->
+            <div class="panel upload-panel">
+
+                <div class="panel-title">
+                    <span class="step-number">01</span>
+
+                    <div>
+                        <h2>Upload document</h2>
+                        <p>Select a photo or scan to process.</p>
+                    </div>
+                </div>
+
+                <label class="dropzone"
+                       id="dropzone"
+                       for="fileInput">
+
+                    <span class="upload-symbol">⇧</span>
+
+                    <strong>
+                        Choose a document image
+                    </strong>
+
+                    <span>
+                        JPG or PNG · Maximum 8 MB
+                    </span>
+
+                    <input
+                        id="fileInput"
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        hidden
+                    >
+                </label>
+
+                <p id="fileName"
+                   class="file-name"
+                   aria-live="polite">
+                    No file selected
+                </p>
+
+                <button
+                    class="primary-btn"
+                    id="processBtn"
+                    type="button"
+                    disabled>
+                    Process Document
+                    <span>→</span>
+                </button>
+
+                <p id="processStatus"
+                   class="process-status"
+                   role="status"
+                   aria-live="polite">
+                    Ready for OpenCV + Tesseract OCR
+                </p>
+
+            </div>
+
+
+            <!-- ORIGINAL DOCUMENT PANEL -->
+            <div class="panel original-panel">
+
+                <div class="panel-title">
+                    <span class="step-number">02</span>
+
+                    <div>
+                        <h2>Original document</h2>
+                        <p>
+                            Preview your image and optionally
+                            select a region to process.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="source-preview"
+                     id="sourcePreview">
+
+                    <span id="placeholder">
+                        Your document preview will appear here
+                    </span>
+
+                    <img
+                        id="previewImage"
+                        alt="Uploaded original document"
+                        hidden
+                    >
+
+                    <div
+                        id="cropSelection"
+                        class="crop-selection"
+                        hidden
+                        aria-hidden="true">
+                    </div>
+
+                </div>
+
+                <!-- MANUAL CROPPING -->
+                <div class="crop-controls">
+
+                    <label class="crop-switch">
+
+                        <input
+                            type="checkbox"
+                            id="cropMode"
+                        >
+
+                        Enable manual crop
+
+                    </label>
+
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="resetCropBtn">
+                        Clear selection
+                    </button>
+
+                </div>
+
+                <p id="cropStatus"
+                   class="tiny-note"
+                   role="status">
+                    Crop off — the complete image
+                    will be processed.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             EMPTY RESULT
+        ====================================== -->
+
+        <div id="resultPlaceholder" class="empty-state">
+
+            Upload a document and click
+            <strong>Process Document</strong>
+            to see the results.
+
+        </div>
+
+
+        <!-- =====================================
+             ALL RESULTS
+        ====================================== -->
+
+        <div id="resultsContent" hidden>
+
+
+            <!-- =====================================
+                 BEFORE / AFTER SLIDER
+            ====================================== -->
+
+            <section class="panel comparison-panel"
+                     aria-labelledby="comparisonHeading">
+
+                <div class="section-head">
+
+                    <div>
+                        <div class="eyebrow small">
+                            VISUAL COMPARISON
+                        </div>
+
+                        <h2 id="comparisonHeading">
+                            Before / After
+                        </h2>
+                    </div>
+
+                    <span class="section-caption">
+                        Drag the divider to compare
+                    </span>
+
+                </div>
+
+
+                <div class="comparison"
+                     id="comparison"
+                     aria-label="Document image comparison">
+
+                    <img
+                        id="compareBefore"
+                        class="comparison-image"
+                        alt="Original document"
+                    >
+
+                    <img
+                        id="compareAfter"
+                        class="comparison-image enhanced-layer"
+                        alt="Enhanced document"
+                    >
+
+                    <div
+                        id="comparisonLine"
+                        class="comparison-divider"
+                        aria-hidden="true">
+                        <span>↔</span>
+                    </div>
+
+                    <span class="image-tag tag-after">
+                        ENHANCED
+                    </span>
+
+                    <span class="image-tag tag-before">
+                        ORIGINAL
+                    </span>
+
+                </div>
+
+
+                <div class="slider-row">
+
+                    <label for="comparisonRange">
+                        Enhanced reveal
+                    </label>
+
+                    <strong id="sliderValue">
+                        50%
+                    </strong>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="comparisonRange"
+                    min="0"
+                    max="100"
+                    value="50"
+                    aria-label="Reveal enhanced image"
+                >
+
+                <p class="tiny-note">
+                    Compare the same selected document
+                    region before and after preprocessing.
+                </p>
+
+                <button
+                    type="button"
+                    class="outline-btn"
+                    id="downloadImageBtn">
+                    ↓ Download enhanced PNG
+                </button>
+
+            </section>
+
+
+            <!-- =====================================
+                 IMAGE PROCESSING STEPS
+            ====================================== -->
+
+            <section class="panel stages-panel"
+                     aria-labelledby="stagesHeading">
+
+                <div class="section-head">
+
+                    <div>
+                        <div class="eyebrow small">
+                            PROCESSING PIPELINE
+                        </div>
+
+                        <h2 id="stagesHeading">
+                            Explore every step
+                        </h2>
+                    </div>
+
+                    <span class="section-caption">
+                        Click a stage to preview it
+                    </span>
+
+                </div>
+
+
+                <div class="stages-grid" id="stagesGrid">
+
+                    <!-- GRAYSCALE -->
+                    <button
+                        type="button"
+                        class="stage-card active"
+                        data-stage="grayscale"
+                        aria-pressed="true">
+
+                        <span class="stage-index">01</span>
+
+                        <img
+                            id="stage-grayscale"
+                            alt="Grayscale image"
+                        >
+
+                        <strong>Grayscale</strong>
+                        <small>Convert RGB to intensity</small>
+
+                    </button>
+
+
+                    <!-- NOISE REMOVAL -->
+                    <button
+                        type="button"
+                        class="stage-card"
+                        data-stage="denoised"
+                        aria-pressed="false">
+
+                        <span class="stage-index">02</span>
+
+                        <img
+                            id="stage-denoised"
+                            alt="Denoised document"
+                        >
+
+                        <strong>Noise Removal</strong>
+                        <small>Reduce visual noise</small>
+
+                    </button>
+
+
+                    <!-- ENHANCEMENT -->
+                    <button
+                        type="button"
+                        class="stage-card"
+                        data-stage="enhanced"
+                        aria-pressed="false">
+
+                        <span class="stage-index">03</span>
+
+                        <img
+                            id="stage-enhanced"
+                            alt="Enhanced document"
+                        >
+
+                        <strong>Enhancement</strong>
+                        <small>Normalize illumination</small>
+
+                    </button>
+
+
+                    <!-- THRESHOLDING -->
+                    <button
+                        type="button"
+                        class="stage-card"
+                        data-stage="binary"
+                        aria-pressed="false">
+
+                        <span class="stage-index">04</span>
+
+                        <img
+                            id="stage-binary"
+                            alt="Binary threshold image"
+                        >
+
+                        <strong>Thresholding</strong>
+                        <small>Black and white output</small>
+
+                    </button>
+
+                </div>
+
+
+                <!-- SELECTED STAGE -->
+                <div class="stage-detail">
+
+                    <div class="stage-detail-title">
+
+                        <h3 id="stageTitle">
+                            Grayscale
+                        </h3>
+
+                        <span id="stageDescription">
+                            Convert the image into a
+                            single intensity channel.
+                        </span>
+
+                    </div>
+
+                    <img
+                        id="stageViewer"
+                        alt="Selected processing stage"
+                    >
+
+                </div>
+
+                <p class="tiny-note">
+                    Thresholding is shown for comparison.
+                    The standard OCR result uses the
+                    enhanced grayscale image.
+                </p>
+
+            </section>
+
+
+            <!-- =====================================
+                 OCR RECOGNITION
+            ====================================== -->
+
+            <section class="panel ocr-panel"
+                     aria-labelledby="ocrHeading">
+
+                <div class="section-head">
+
+                    <div>
+                        <div class="eyebrow small">
+                            TEXT RECOGNITION
+                        </div>
+
+                        <h2 id="ocrHeading">
+                            OCR Before / After
+                        </h2>
+                    </div>
+
+                    <span class="pill">
+                        Tesseract · English
+                    </span>
+
+                </div>
+
+
+                <!-- OCR TEXT OUTPUT -->
+                <div class="ocr-grid">
+
+                    <div class="ocr-card">
+
+                        <h3>Before processing</h3>
+
+                        <pre id="ocrBefore">Awaiting processing...</pre>
+
+                    </div>
+
+                    <div class="ocr-card">
+
+                        <h3>After enhancement</h3>
+
+                        <pre id="ocrText">Awaiting processing...</pre>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================
+                     LESSON 21 - ACCURACY EVALUATION
+                ====================================== -->
+
+                <div class="accuracy-panel">
+
+                    <div class="accuracy-heading">
+
+                        <h3>
+                            OCR Accuracy Evaluation
+                        </h3>
+
+                        <span class="pill">
+                            CER / WER
+                        </span>
+
+                    </div>
+
+                    <p class="tiny-note">
+                        Enter the verified original document
+                        text to measure OCR recognition errors.
+                    </p>
+
+                    <label for="referenceText">
+                        Ground Truth Text
+                    </label>
+
+                    <textarea
+                        id="referenceText"
+                        rows="6"
+                        placeholder="Paste the correct original document text here..."
+                    ></textarea>
+
+
+                    <div class="accuracy-actions">
+
+                        <button
+                            type="button"
+                            class="outline-btn"
+                            id="evaluateBtn">
+                            Calculate CER &amp; WER
+                        </button>
+
+                        <button
+                            type="button"
+                            class="outline-btn"
+                            id="clearReferenceBtn">
+                            Clear Reference
+                        </button>
+
+                    </div>
+
+
+                    <p
+                        id="accuracyFeedback"
+                        class="tiny-note"
+                        role="status"
+                        aria-live="polite">
+                        Enter reference text to evaluate OCR.
+                    </p>
+
+
+                    <!-- ACCURACY METRICS -->
+                    <div id="accuracyResults" hidden>
+
+                        <div class="accuracy-grid">
+
+                            <div class="accuracy-metric">
+
+                                <span>CER Before</span>
+
+                                <strong id="cerBefore">
+                                    --
+                                </strong>
+
+                            </div>
+
+                            <div class="accuracy-metric">
+
+                                <span>CER After</span>
+
+                                <strong id="cerAfter">
+                                    --
+                                </strong>
+
+                            </div>
+
+                            <div class="accuracy-metric">
+
+                                <span>WER Before</span>
+
+                                <strong id="werBefore">
+                                    --
+                                </strong>
+
+                            </div>
+
+                            <div class="accuracy-metric">
+
+                                <span>WER After</span>
+
+                                <strong id="werAfter">
+                                    --
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        <p
+                            id="accuracySummary"
+                            class="accuracy-summary">
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================================
+                     LESSON 22 - PERFORMANCE DASHBOARD
+                ====================================== -->
+
+                <section
+                    id="evaluationReport"
+                    class="evaluation-report"
+                    aria-label="OCR performance dashboard"
+                    hidden>
+
+                    <div class="report-heading">
+
+                        <div>
+                            <h3>
+                                OCR Performance Dashboard
+                            </h3>
+
+                            <p>
+                                Compare error rates before
+                                and after preprocessing.
+                            </p>
+                        </div>
+
+                        <span class="pill">
+                            LIVE EVALUATION
+                        </span>
+
+                    </div>
+
+
+                    <p id="chartScaleNote"
+                       class="tiny-note">
+                    </p>
+
+
+                    <!-- CER CHART -->
+                    <div class="report-chart">
+
+                        <h4>
+                            Character Error Rate (CER)
+                        </h4>
+
+
+                        <div class="metric-bar-row">
+
+                            <span>Before</span>
+
+                            <div class="metric-bar-track">
+
+                                <div
+                                    id="cerBarBefore"
+                                    class="metric-bar before">
+                                </div>
+
+                            </div>
+
+                            <strong id="cerLabelBefore">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="metric-bar-row">
+
+                            <span>After</span>
+
+                            <div class="metric-bar-track">
+
+                                <div
+                                    id="cerBarAfter"
+                                    class="metric-bar after">
+                                </div>
+
+                            </div>
+
+                            <strong id="cerLabelAfter">
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- WER CHART -->
+                    <div class="report-chart">
+
+                        <h4>
+                            Word Error Rate (WER)
+                        </h4>
+
+
+                        <div class="metric-bar-row">
+
+                            <span>Before</span>
+
+                            <div class="metric-bar-track">
+
+                                <div
+                                    id="werBarBefore"
+                                    class="metric-bar before">
+                                </div>
+
+                            </div>
+
+                            <strong id="werLabelBefore">
+                                --
+                            </strong>
+
+                        </div>
+
+
+                        <div class="metric-bar-row">
+
+                            <span>After</span>
+
+                            <div class="metric-bar-track">
+
+                                <div
+                                    id="werBarAfter"
+                                    class="metric-bar after">
+                                </div>
+
+                            </div>
+
+                            <strong id="werLabelAfter">
+                                --
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- INTERPRETATION -->
+                    <p
+                        id="reportInterpretation"
+                        class="report-interpretation">
+                    </p>
+
+
+                    <!-- CSV EXPORT -->
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="downloadCsvBtn">
+                        ↓ Download Evaluation Report (.CSV)
+                    </button>
+
+                </section>
+
+
+                <!-- =====================================
+                     LESSON 23 - OCR MODE COMPARISON
+                ====================================== -->
+
+                <section
+                    class="modes-panel"
+                    aria-labelledby="modesHeading">
+
+                    <div class="report-heading">
+
+                        <div>
+
+                            <h3 id="modesHeading">
+                                Compare OCR Modes
+                            </h3>
+
+                            <p>
+                                Evaluate four Tesseract
+                                configurations and identify
+                                the lowest-error tested mode.
+                            </p>
+
+                        </div>
+
+                        <span class="pill">
+                            LESSON 23
+                        </span>
+
+                    </div>
+
+
+                    <p class="tiny-note">
+                        Process a document first and enter
+                        its verified Ground Truth Text.
+                        All configurations use the same
+                        image or selected crop.
+                    </p>
+
+
+                    <!-- COMPARE BUTTON -->
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="compareModesBtn">
+                        Compare OCR Configurations
+                    </button>
+
+
+                    <p
+                        id="modesStatus"
+                        class="tiny-note"
+                        role="status"
+                        aria-live="polite">
+                        Ready to compare OCR configurations.
+                    </p>
+
+
+                    <!-- COMPARISON RESULTS -->
+                    <div id="modesResults" hidden>
+
+                        <div class="mode-table-wrap">
+
+                            <table class="mode-table">
+
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            OCR Mode
+                                        </th>
+
+                                        <th scope="col">
+                                            CER
+                                        </th>
+
+                                        <th scope="col">
+                                            WER
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="modesTableBody">
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+
+                        <!-- BEST CONFIGURATION -->
+                        <p
+                            id="modeBest"
+                            class="report-interpretation">
+                        </p>
+
+
+                        <h4>
+                            Text from the lowest-error
+                            tested mode
+                        </h4>
+
+                        <pre
+                            id="modeBestText"
+                            class="mode-output"></pre>
+
+                        <p class="tiny-note">
+                            The best mode is selected using
+                            the lowest WER, with CER used
+                            to break ties. Results depend
+                            on the provided reference text.
+                        </p>
+
+                    </div>
+
+                </section>
+
+
+                <!-- =====================================
+                     DOWNLOAD / COPY RESULTS
+                ====================================== -->
+
+                <div class="action-row">
+
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="copyTextBtn">
+                        Copy extracted text
+                    </button>
+
+                    <button
+                        type="button"
+                        class="outline-btn"
+                        id="downloadTextBtn">
+                        ↓ Download TXT
+                    </button>
+
+                </div>
+
+
+                <p class="tiny-note">
+                    OCR accuracy requires verified
+                    reference text. Lower CER and WER
+                    mean fewer recognition errors.
+                    Image enhancement does not always
+                    improve OCR accuracy.
+                </p>
+
+            </section>
+
+        </div>
+
+    </main>
+
+
+    <!-- =====================================
+         FOOTER
+    ====================================== -->
+
+    <footer>
+        DocVision OCR · Digital Image Processing Mini Project
+        · Built with Python, OpenCV, Flask &amp; Tesseract
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+    <script
+        src="{{ url_for('static', filename='script.js') }}">
+    </script>
+
+</body>
+</html>
